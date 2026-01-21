@@ -11,44 +11,33 @@
 ---
 
 ## Objective
-This assignment aims to:
-1. Transform the NO2 feature values \(x\) into a new variable \(z\) using a roll-number-based non-linear transformation.
+1. Transform the NO2 feature values **x** into a new variable **z** using a roll-number-based non-linear transformation.
 2. Learn the parameters of the probability density function:
 
-\[
-\hat{p}(z) = c \cdot e^{-\lambda(z-\mu)^2}
-\]
+**p̂(z) = c * exp(-λ * (z - μ)^2)**
 
-where the parameters to estimate are: **\(\lambda\), \(\mu\), and \(c\)**.
+where the parameters to estimate are: **λ**, **μ**, and **c**.
 
 ---
 
 ## Roll Number Details
-University Roll Number:
 
-\[
-r = 102303982
-\]
+University Roll Number:  
+**r = 102303982**
 
 The transformation parameters are defined as:
 
-\[
-a_r = 0.05 \cdot (r \bmod 7)
-\]
-\[
-b_r = 0.3 \cdot ((r \bmod 5)+1)
-\]
+- **a_r = 0.05 * (r mod 7)**
+- **b_r = 0.3 * ((r mod 5) + 1)**
 
 Calculated values:
 
-- \(r \bmod 7 = 4 \Rightarrow a_r = 0.05 \times 4 = 0.20\)
-- \(r \bmod 5 = 2 \Rightarrow b_r = 0.3 \times (2+1) = 0.90\)
+- r mod 7 = 4  →  a_r = 0.05 * 4 = **0.20**
+- r mod 5 = 2  →  b_r = 0.3 * (2 + 1) = **0.90**
 
 So the final transformation becomes:
 
-\[
-z = x + 0.20 \cdot \sin(0.90x)
-\]
+**z = x + 0.20 * sin(0.90 * x)**
 
 ---
 
@@ -59,60 +48,44 @@ z = x + 0.20 \cdot \sin(0.90x)
 - Removed missing values (NaN) and invalid entries.
 - Final valid sample size:
 
-\[
-n = 419509
-\]
+**n = 419509**
 
 ---
 
 ## Step 2: Transformation (x → z)
-For each NO2 value \(x_i\), transformed value \(z_i\) is computed as:
+For each NO2 value (x_i), transformed value (z_i) is computed as:
 
-\[
-z_i = x_i + 0.20 \cdot \sin(0.90x_i)
-\]
+**z_i = x_i + 0.20 * sin(0.90 * x_i)**
 
 ---
 
 ## Step 3: Learning the PDF Parameters
+
 We are given the PDF model:
 
-\[
-\hat{p}(z) = c \cdot e^{-\lambda(z-\mu)^2}
-\]
+**p̂(z) = c * exp(-λ * (z - μ)^2)**
 
-To estimate parameters, we use the MLE (Maximum Likelihood Estimation) approach:
+To estimate parameters, we use MLE (Maximum Likelihood Estimation):
 
 ### Mean
-\[
-\mu = \frac{1}{n}\sum_{i=1}^{n} z_i
-\]
+**μ = (1/n) * Σ z_i**
 
 ### Variance (MLE)
-\[
-\sigma^2 = \frac{1}{n}\sum_{i=1}^{n}(z_i-\mu)^2
-\]
+**σ² = (1/n) * Σ (z_i - μ)²**
 
 ### Lambda
-\[
-\lambda = \frac{1}{2\sigma^2}
-\]
+**λ = 1 / (2 * σ²)**
 
-### Constant c
-To keep the density normalized:
-
-\[
-c = \sqrt{\frac{\lambda}{\pi}}
-\]
+### Constant c (normalization)
+**c = sqrt(λ / π)**
 
 ---
 
 ## Final Estimated Parameters
-The estimated parameters obtained from the transformed dataset are:
 
-- **Mean (\(\mu\))** = `25.804091267939`
-- **Variance (\(\sigma^2\))** = `342.610945104577`
-- **Lambda (\(\lambda\))** = `0.001459381281`
+- **Mean (μ)** = `25.804091267939`
+- **Variance (σ²)** = `342.610945104577`
+- **Lambda (λ)** = `0.001459381281`
 - **Constant (c)** = `0.021553085382`
 
 ---
@@ -120,34 +93,26 @@ The estimated parameters obtained from the transformed dataset are:
 ## Results Visualization
 
 ### 1) Histogram of Transformed Variable z (Density)
-This plot shows the distribution of transformed values \(z\).
-
 ![Transformed variable z histogram](outputs/histogram.png)
 
----
-
 ### 2) Histogram of z with Fitted PDF Curve
-The orange curve represents the learned density function:
+The curve represents:
 
-\[
-\hat{p}(z) = c \cdot e^{-\lambda(z-\mu)^2}
-\]
+**p̂(z) = c * exp(-λ * (z - μ)^2)**
 
 ![Histogram of z with fitted curve](outputs/fitted_curve.png)
 
 ---
 
 ## Conclusion
-- The NO2 values were successfully transformed into \(z\) using the roll-number-based non-linear transformation.
-- The parameters \(\mu\), \(\sigma^2\), \(\lambda\), and \(c\) were estimated using MLE.
+- The NO2 values were transformed into **z** using the roll-number-based non-linear transformation.
+- The parameters **μ**, **σ²**, **λ**, and **c** were estimated using MLE.
 - The fitted density curve provides an approximate probabilistic representation of the transformed data distribution.
 
 ---
 
 ## Files Included in This Repository
 - `Assignment1_NO2_PDF.ipynb` → Colab notebook with full implementation
-- `outputs/histogram.png` → Histogram of transformed variable \(z\)
+- `outputs/histogram.png` → Histogram of transformed variable z
 - `outputs/fitted_curve.png` → Histogram + fitted density curve
-- `outputs/estimated_parameters.csv` → Saved estimated values of parameters
-
----
+- `outputs/estimated_parameters.csv` → Saved estimated parameter values
