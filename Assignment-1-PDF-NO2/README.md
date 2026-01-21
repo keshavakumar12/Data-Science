@@ -93,14 +93,14 @@ To estimate parameters, we use MLE (Maximum Likelihood Estimation):
 ## Results Visualization
 
 ### 1) Histogram of Transformed Variable z (Density)
-![Transformed variable z histogram](outputs/histogram.png)
+![Transformed variable z histogram](histogram(density).png)
 
 ### 2) Histogram of z with Fitted PDF Curve
 The curve represents:
 
 **p̂(z) = c * exp(-λ * (z - μ)^2)**
 
-![Histogram of z with fitted curve](outputs/fitted_curve.png)
+![Histogram of z with fitted curve](histogram_with_p(z).png)
 
 ---
 
