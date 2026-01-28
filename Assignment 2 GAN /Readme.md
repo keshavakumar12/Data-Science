@@ -10,7 +10,7 @@ The objective is to learn the distribution of a **transformed random variable** 
   - Histogram density estimation
   - Kernel Density Estimation (KDE)
 
-Dataset used: *India Air Quality Data* (CSV uploaded from local system).
+Dataset used: https://www.kaggle.com/datasets/shrutibhargava94/india-air-quality-data
 
 ---
 
