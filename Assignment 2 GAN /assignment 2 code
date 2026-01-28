@@ -1,0 +1,159 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import layers
+from sklearn.neighbors import KernelDensity
+from google.colab import files
+
+np.random.seed(7)
+tf.random.set_seed(7)
+
+r = 102303982
+a_r = 0.5 * (r % 7)          # = 2.0
+b_r = 0.3 * ((r % 5) + 1)    # = 0.9
+
+print("a_r =", a_r)
+print("b_r =", b_r)
+
+uploaded = files.upload()
+csv_path = list(uploaded.keys())[0]
+print("Using file:", csv_path)
+
+try:
+    df = pd.read_csv(csv_path)
+except UnicodeDecodeError:
+    df = pd.read_csv(csv_path, encoding="latin1")
+
+x = pd.to_numeric(df["no2"], errors="coerce").dropna().to_numpy()
+x = x[np.isfinite(x)]
+x = x[x >= 0]
+
+print("Number of NO2 samples:", len(x))
+
+z = x + a_r * np.sin(b_r * x)
+
+plt.figure()
+plt.hist(z, bins=60, density=True)
+plt.title("Real z (transformed) - histogram")
+plt.xlabel("z")
+plt.ylabel("density")
+plt.show()
+
+z = z.astype("float32")
+z_mean = float(z.mean())
+z_std  = float(z.std() + 1e-8)
+
+z_norm = (z - z_mean) / z_std
+z_norm = z_norm.reshape(-1, 1)
+
+batch_size = 256
+dataset = tf.data.Dataset.from_tensor_slices(z_norm).shuffle(10000).batch(batch_size, drop_remainder=True)
+
+noise_dim = 8
+
+def make_generator():
+    return keras.Sequential([
+        layers.Input(shape=(noise_dim,)),
+        layers.Dense(32, activation="relu"),
+        layers.Dense(32, activation="relu"),
+        layers.Dense(1) 
+    ], name="Generator")
+
+def make_discriminator():
+    return keras.Sequential([
+        layers.Input(shape=(1,)),
+        layers.Dense(32, activation="relu"),
+        layers.Dense(32, activation="relu"),
+        layers.Dense(1, activation="sigmoid")  
+    ], name="Discriminator")
+
+G = make_generator()
+D = make_discriminator()
+
+bce = keras.losses.BinaryCrossentropy(from_logits=False)
+g_opt = keras.optimizers.Adam(learning_rate=0.001)
+d_opt = keras.optimizers.Adam(learning_rate=0.001)
+
+@tf.function
+def train_step(real_z):
+    batch = tf.shape(real_z)[0]
+
+    noise = tf.random.normal(shape=(batch, noise_dim), mean=0.0, stddev=1.0)
+    real_labels = tf.ones((batch, 1))
+    fake_labels = tf.zeros((batch, 1))
+
+    with tf.GradientTape() as tape_d:
+        fake_z = G(noise, training=True)
+
+        pred_real = D(real_z, training=True)
+        pred_fake = D(fake_z, training=True)
+
+        d_loss_real = bce(real_labels, pred_real)
+        d_loss_fake = bce(fake_labels, pred_fake)
+        d_loss = d_loss_real + d_loss_fake
+
+    grads_d = tape_d.gradient(d_loss, D.trainable_variables)
+    d_opt.apply_gradients(zip(grads_d, D.trainable_variables))
+    noise2 = tf.random.normal(shape=(batch, noise_dim), mean=0.0, stddev=1.0)
+    with tf.GradientTape() as tape_g:
+        fake_z2 = G(noise2, training=True)
+        pred_fake2 = D(fake_z2, training=True)
+        g_loss = bce(real_labels, pred_fake2)
+
+    grads_g = tape_g.gradient(g_loss, G.trainable_variables)
+    g_opt.apply_gradients(zip(grads_g, G.trainable_variables))
+
+    return d_loss, g_loss
+
+epochs = 200
+for epoch in range(1, epochs + 1):
+    d_losses = []
+    g_losses = []
+    for real_batch in dataset:
+        d_loss, g_loss = train_step(real_batch)
+        d_losses.append(d_loss.numpy())
+        g_losses.append(g_loss.numpy())
+
+    if epoch % 20 == 0:
+        print(f"Epoch {epoch}/{epochs} | D loss: {np.mean(d_losses):.4f} | G loss: {np.mean(g_losses):.4f}")
+
+print("GAN training completed.")
+
+N = 50000
+noise = tf.random.normal(shape=(N, noise_dim), mean=0.0, stddev=1.0)
+zf_norm = G(noise, training=False).numpy().reshape(-1)
+
+zf = zf_norm * z_std + z_mean
+
+plt.figure()
+plt.hist(zf, bins=60, density=True, alpha=0.7, label="GAN samples (hist)")
+plt.title("PDF approximation from GAN samples (Histogram)")
+plt.xlabel("z")
+plt.ylabel("density")
+plt.legend()
+plt.show()
+
+grid = np.linspace(np.percentile(z, 0.5), np.percentile(z, 99.5), 500).reshape(-1, 1)
+
+kde_real = KernelDensity(kernel="gaussian", bandwidth=0.3).fit(z.reshape(-1, 1))
+kde_fake = KernelDensity(kernel="gaussian", bandwidth=0.3).fit(zf.reshape(-1, 1))
+
+p_real = np.exp(kde_real.score_samples(grid))
+p_fake = np.exp(kde_fake.score_samples(grid))
+
+plt.figure()
+plt.plot(grid[:, 0], p_real, label="Real z (KDE)")
+plt.plot(grid[:, 0], p_fake, label="GAN z_f (KDE)")
+plt.title("KDE: Real vs GAN generated distribution")
+plt.xlabel("z")
+plt.ylabel("density")
+plt.legend()
+plt.show()
+
+print("\nReal z: mean =", float(np.mean(z)), "std =", float(np.std(z)))
+print("GAN zf: mean =", float(np.mean(zf)), "std =", float(np.std(zf)))
+
+print("\nReal z quantiles (5,50,95):", np.percentile(z, [5, 50, 95]))
+print("GAN zf quantiles  (5,50,95):", np.percentile(zf, [5, 50, 95]))
