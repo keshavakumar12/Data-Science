@@ -11,8 +11,8 @@ np.random.seed(7)
 tf.random.set_seed(7)
 
 r = 102303982
-a_r = 0.5 * (r % 7)          # = 2.0
-b_r = 0.3 * ((r % 5) + 1)    # = 0.9
+a_r = 0.5 * (r % 7)          
+b_r = 0.3 * ((r % 5) + 1)    
 
 print("a_r =", a_r)
 print("b_r =", b_r)
