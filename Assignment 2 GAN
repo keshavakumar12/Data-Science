@@ -1,0 +1,230 @@
+# README — Learning an Unknown PDF from Data Only using a Simple GAN (TensorFlow)
+
+## 1. Problem Statement
+We are given **samples only** (no analytical PDF).  
+We must learn the distribution of a **transformed random variable** `z` derived from NO2 concentration `x`, using a **Generative Adversarial Network (GAN)**.
+
+- **Real samples:** `z`
+- **Fake samples:** `z_f = G(error)` where `error ~ N(0,1)`
+- After training, estimate the PDF of the learned distribution using:
+  - **Histogram density**
+  - **Kernel Density Estimation (KDE)**
+
+Dataset: India Air Quality Data (CSV uploaded from local machine).
+
+---
+
+## 2. Transformation Parameters (Using Roll Number)
+Roll number: `r = 102303982`
+
+Transformation:
+\[
+z = x + a_r\sin(b_r x)
+\]
+
+Where:
+\[
+a_r = 0.5 (r \bmod 7), \quad b_r = 0.3 ((r \bmod 5) + 1)
+\]
+
+Compute:
+- \( r \bmod 7 = 4 \Rightarrow a_r = 0.5 \times 4 = 2.0 \)
+- \( r \bmod 5 = 2 \Rightarrow b_r = 0.3 \times (2+1) = 0.9 \)
+
+ **Final values**
+| Parameter | Value |
+|---|---:|
+| r | 102303982 |
+| a_r | 2.0 |
+| b_r | 0.9 |
+
+---
+
+## 3. Methodology (Step-by-Step)
+
+### Step A — Data Loading and Cleaning (NO2 as x)
+1. Upload CSV in Colab using `files.upload()`
+2. Read CSV (with encoding fallback if needed)
+3. Extract `x = df["no2"]`
+4. Clean `x`:
+   - convert to numeric
+   - drop missing values
+   - keep finite values only
+   - keep `x >= 0`
+
+### Step B — Transform x → z (Core transformation)
+Apply:
+\[
+z = x + a_r\sin(b_r x)
+\]
+
+This creates the real training samples `z` whose PDF is unknown.
+
+### Step C — Normalize z (for stable GAN training)
+GAN trains better when data is centered and scaled.
+We compute:
+- `z_mean`, `z_std`
+- `z_norm = (z - z_mean) / z_std`
+
+GAN is trained on `z_norm`, and later generated samples are de-normalized.
+
+### Step D — GAN Design (Beginner simple MLP GAN)
+We use a simple GAN with two small fully-connected networks:
+
+#### Generator (G)
+Input: Gaussian noise `error ~ N(0,1)`  
+Output: one value `z_f` (normalized scale)
+
+Architecture:
+- Dense(32) → ReLU
+- Dense(32) → ReLU
+- Dense(1)
+
+#### Discriminator (D)
+Input: one value (real `z` or fake `z_f`)  
+Output: probability of being real
+
+Architecture:
+- Dense(32) → ReLU
+- Dense(32) → ReLU
+- Dense(1) → Sigmoid
+
+### Step E — Training Process
+For each batch:
+1. **Train Discriminator**
+   - Real `z` labeled as 1
+   - Fake `z_f` labeled as 0
+2. **Train Generator**
+   - Generate fake `z_f`
+   - Force discriminator to output 1 for fake samples
+
+Loss:
+- Binary Cross Entropy (BCE)
+
+Optimizers:
+- Adam for both networks
+
+### Step F — PDF Estimation from Generator Samples
+After training:
+1. Generate many samples `z_f` using the generator
+2. De-normalize them to original scale:
+\[
+z_f = z_{f,norm}\sigma + \mu
+\]
+3. Approximate PDF using:
+- Histogram density estimation
+- KDE comparison (Real z vs GAN z_f)
+
+---
+
+## 4. Results (Plots + Comparisons)
+
+### Plot 1 — Histogram of Real z (Transformed Data)
+**Purpose:** Shows the empirical distribution of the real transformed variable `z`.
+
+Insert your plot screenshot here:
+- `Real z (transformed) - histogram`
+
+**Observation:**
+- Real `z` distribution is right-skewed.
+- Most mass is concentrated near smaller values.
+- Long tail exists toward larger `z`.
+
+---
+
+### Plot 2 — PDF Approximation from GAN Samples (Histogram)
+**Purpose:** Shows density estimate from generated samples `z_f`.
+
+Insert your plot screenshot here:
+- `PDF approximation from GAN samples (Histogram)`
+
+**Observation:**
+- GAN learns the general skewness and tail behavior.
+- Generated histogram is smoother than real histogram.
+
+---
+
+### Plot 3 — KDE: Real z vs GAN generated z_f
+**Purpose:** Direct visual comparison of smooth PDFs (KDE).
+
+Insert your plot screenshot here:
+- `KDE: Real vs GAN generated distribution`
+
+**Observation (important):**
+- Real KDE has multiple sharp peaks (many modes).
+- GAN KDE is smoother and misses several smaller peaks.
+- This indicates **mode dropping / limited mode coverage**, which is common in simple GANs.
+
+---
+
+## 5. Numerical Results (Printed by Code)
+
+### Mean and Standard Deviation
+| Metric | Real z | GAN z_f |
+|---|---:|---:|
+| Mean | 25.7543 | 28.1982 |
+| Std Dev | 18.6193 | 16.2823 |
+
+### Quantile Comparison (5%, 50%, 95%)
+| Quantile | Real z | GAN z_f |
+|---|---:|---:|
+| 5% | 4.6748 | 11.2308 |
+| 50% (Median) | 23.6273 | 22.9441 |
+| 95% | 58.8824 | 60.4856 |
+
+---
+
+## 6. Interpretation of Results (What it Means)
+
+### A) Mode Coverage
+- Real distribution has many narrow peaks (multi-modal).
+- The generator captured the overall trend but did not reproduce all peaks.
+- This is typical **mode dropping**, especially with a basic BCE GAN.
+
+### B) Training Stability
+- Training completes without crashes.
+- Discriminator and generator losses print periodically.
+- Because this is a vanilla GAN, training can still be unstable in some runs, but seeds were fixed for consistency.
+
+### C) Quality of Generated Distribution
+Strengths:
+- Generator learned the **overall shape**, skewness, and tail location.
+- Median and 95th percentile are close to the real distribution.
+
+Weaknesses:
+- 5th percentile differs significantly (GAN generates fewer very small z values).
+- KDE mismatch shows missing peaks and oversmoothing.
+
+---
+
+## 7. Limitations (Honest + Correct)
+- The GAN implemented is intentionally simple (beginner level).
+- Vanilla GAN (BCE loss) is known to struggle with:
+  - multimodal distributions
+  - sharp spikes
+  - mode coverage
+- KDE bandwidth choice affects perceived smoothness.
+
+---
+
+## 8. How to Run
+1. Open the notebook in Google Colab
+2. Run all cells
+3. Upload the `data.csv` file when prompted
+4. Outputs produced:
+   - Plot 1: Real z histogram
+   - Plot 2: GAN samples histogram PDF
+   - Plot 3: KDE real vs GAN
+   - Printed summary table (mean/std/quantiles)
+
+---
+
+## 9. Files / Outputs to Include in Submission
+- Transformation parameters `(a_r, b_r)`
+- GAN architecture description
+- All three plots
+- Result tables (mean/std and quantiles)
+- Observations on:
+  - mode coverage
+  - training stability
+  - quality of generated distribution
