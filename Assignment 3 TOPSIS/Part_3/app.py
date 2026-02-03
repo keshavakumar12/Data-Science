@@ -95,11 +95,6 @@ def run_topsis(df: pd.DataFrame, weights: np.ndarray, impacts: list[str]) -> pd.
 
 
 def send_email_with_attachment(to_email: str, file_path: str):
-    """
-    Configure these via environment variables before running:
-      SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, FROM_EMAIL
-    For Gmail: use App Password (not normal password).
-    """
     smtp_host = os.environ.get("SMTP_HOST")
     smtp_port = int(os.environ.get("SMTP_PORT", "587"))
     smtp_user = os.environ.get("SMTP_USER")
@@ -145,7 +140,6 @@ def submit():
     if not re.match(EMAIL_REGEX, email):
         return "Error: Invalid email format.", 400
 
-    # Save upload
     file_id = str(uuid.uuid4())[:8]
     input_path = os.path.join(UPLOAD_DIR, f"{file_id}_{file.filename}")
     file.save(input_path)
@@ -170,3 +164,4 @@ def submit():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
