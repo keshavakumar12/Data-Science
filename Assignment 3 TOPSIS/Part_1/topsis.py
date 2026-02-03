@@ -10,7 +10,7 @@ def _error_exit(msg: str):
 
 
 def parse_weights_impacts(weights_str: str, impacts_str: str, n_criteria: int):
-    # weights: "1,2,3"
+   
     try:
         weights = [float(x.strip()) for x in weights_str.split(",")]
     except Exception:
@@ -29,7 +29,7 @@ def parse_weights_impacts(weights_str: str, impacts_str: str, n_criteria: int):
         _error_exit("Weights must be positive numbers.")
 
     weights = np.array(weights, dtype=float)
-    # normalize weights (common practice; safe if user gives any scale)
+   
     weights = weights / weights.sum()
     return weights, impacts
 
@@ -41,7 +41,7 @@ def topsis(df: pd.DataFrame, weights: np.ndarray, impacts: list[str]) -> pd.Data
     names = df.iloc[:, 0]
     criteria_df = df.iloc[:, 1:].copy()
 
-    # Validate numeric columns from 2nd to last
+   
     for col in criteria_df.columns:
         criteria_df[col] = pd.to_numeric(criteria_df[col], errors="coerce")
 
@@ -51,16 +51,16 @@ def topsis(df: pd.DataFrame, weights: np.ndarray, impacts: list[str]) -> pd.Data
 
     X = criteria_df.to_numpy(dtype=float)
 
-    # Step 1: normalization
+    
     denom = np.sqrt((X ** 2).sum(axis=0))
     if np.any(denom == 0):
         _error_exit("At least one criteria column has all zeros, cannot normalize.")
     R = X / denom
 
-    # Step 2: weighted normalized matrix
+   
     V = R * weights
 
-    # Step 3: ideal best and worst
+   
     ideal_best = np.zeros(V.shape[1])
     ideal_worst = np.zeros(V.shape[1])
 
@@ -73,11 +73,11 @@ def topsis(df: pd.DataFrame, weights: np.ndarray, impacts: list[str]) -> pd.Data
             ideal_best[j] = np.min(col)
             ideal_worst[j] = np.max(col)
 
-    # Step 4: distances
+   
     s_pos = np.sqrt(((V - ideal_best) ** 2).sum(axis=1))
     s_neg = np.sqrt(((V - ideal_worst) ** 2).sum(axis=1))
 
-    # Step 5: score
+  
     denom2 = s_pos + s_neg
     if np.any(denom2 == 0):
         _error_exit("Division by zero encountered in score computation (check input data).")
@@ -86,13 +86,13 @@ def topsis(df: pd.DataFrame, weights: np.ndarray, impacts: list[str]) -> pd.Data
     out = df.copy()
     out["Topsis Score"] = score
 
-    # Step 6: rank (descending score)
+    
     out["Rank"] = out["Topsis Score"].rank(ascending=False, method="dense").astype(int)
     return out
 
 
 def main():
-    # Requirement: correct number of parameters
+    
     if len(sys.argv) != 5:
         _error_exit(
             "Incorrect number of parameters.\n"
@@ -104,11 +104,11 @@ def main():
     impacts_str = sys.argv[3]
     output_file = sys.argv[4]
 
-    # File not found handling
+    
     if not os.path.isfile(input_file):
         _error_exit("Input file not found.")
 
-    # Read CSV
+  
     try:
         df = pd.read_csv(input_file)
     except Exception as e:
@@ -131,3 +131,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
