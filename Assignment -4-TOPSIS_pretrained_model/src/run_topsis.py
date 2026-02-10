@@ -7,16 +7,16 @@ import os
 def topsis(df, criteria, weights, impacts):
     X = df[criteria].astype(float).to_numpy()
 
-    # Normalize
+    
     norm = np.sqrt((X**2).sum(axis=0))
     R = X / norm
 
-    # Weights
+    
     w = np.array(weights, dtype=float)
     w = w / w.sum()
     V = R * w
 
-    # Ideal best/worst
+    
     ideal_best = np.zeros(V.shape[1])
     ideal_worst = np.zeros(V.shape[1])
 
@@ -28,7 +28,7 @@ def topsis(df, criteria, weights, impacts):
             ideal_best[j] = V[:, j].min()
             ideal_worst[j] = V[:, j].max()
 
-    # Distances
+    
     d_pos = np.sqrt(((V - ideal_best)**2).sum(axis=1))
     d_neg = np.sqrt(((V - ideal_worst)**2).sum(axis=1))
 
@@ -82,3 +82,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
