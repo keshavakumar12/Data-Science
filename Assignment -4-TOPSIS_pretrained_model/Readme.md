@@ -161,7 +161,8 @@ outputs/topsis_ranking.csv
 
 Graph:
 
-![TOPSIS Scores](outputs/topsis_scores.png)
+<img width="2000" height="1000" alt="topsis_scores" src="https://github.com/user-attachments/assets/e5c1bd4c-44ba-4f36-b22a-d87e246638ae" />
+
 
 ---
 
