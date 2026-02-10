@@ -138,8 +138,6 @@ Move the file to:
 
 data/results.csv
 
-Fill the `params_millions` and `vram_gb` columns manually.
-
 ---
 
 ## Step 3: Run TOPSIS
