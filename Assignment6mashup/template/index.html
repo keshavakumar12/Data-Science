@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mashup Builder</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --accent: #38bdf8;
+      --accent-2: #f59e0b;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Inter", "Segoe UI", sans-serif;
+      background: radial-gradient(circle at 20% 20%, rgba(56,189,248,0.15), transparent 30%),
+                  radial-gradient(circle at 80% 0%, rgba(245,158,11,0.12), transparent 28%),
+                  var(--bg);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+    }
+    .card {
+      width: 100%;
+      max-width: 760px;
+      background: var(--panel);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: var(--radius);
+      padding: 28px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 26px;
+      letter-spacing: -0.02em;
+    }
+    p.lead {
+      margin: 0 0 22px;
+      color: var(--muted);
+    }
+    form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+    }
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #d1d5db;
+    }
+    input {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      outline: none;
+      transition: border 0.15s ease, transform 0.1s ease;
+    }
+    input:focus {
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+    .actions {
+      grid-column: 1 / -1;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      margin-top: 6px;
+    }
+    button {
+      border: none;
+      padding: 12px 16px;
+      border-radius: 10px;
+      background: linear-gradient(120deg, var(--accent), var(--accent-2));
+      color: #0b1021;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      transition: transform 0.12s ease, box-shadow 0.12s ease;
+    }
+    button:hover { transform: translateY(-1px); box-shadow: 0 10px 30px rgba(56,189,248,0.25); }
+    button:active { transform: translateY(1px); }
+    .status {
+      grid-column: 1 / -1;
+      padding: 14px 16px;
+      border-radius: 10px;
+      background: rgba(56,189,248,0.12);
+      border: 1px solid rgba(56,189,248,0.3);
+      color: #cffafe;
+    }
+    .status.error {
+      background: rgba(248,113,113,0.12);
+      border-color: rgba(248,113,113,0.3);
+      color: #fecdd3;
+    }
+    ul { margin: 0 0 0 18px; }
+    .meta { margin-top: 18px; color: var(--muted); font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Mashup Generator</h1>
+    <p class="lead">Roll No. {{ roll_number }} · Provide the details and we will email a zipped mashup.</p>
+
+    {% if message %}
+      <div class="status">{{ message }}</div>
+    {% endif %}
+
+    {% if errors and errors|length %}
+      <div class="status error">
+        <strong>Check these issues:</strong>
+        <ul>
+          {% for err in errors %}
+            <li>{{ err }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    <form method="post">
+      <div>
+        <label for="singer">Singer name</label>
+        <input id="singer" name="singer" placeholder="e.g., Sharry Maan" required>
+      </div>
+      <div>
+        <label for="videos">Number of videos ( >10 )</label>
+        <input id="videos" name="videos" type="number" min="11" value="12" required>
+      </div>
+      <div>
+        <label for="duration">Clip duration in seconds ( >20 )</label>
+        <input id="duration" name="duration" type="number" min="21" value="25" required>
+      </div>
+      <div>
+        <label for="email">Email to receive zip</label>
+        <input id="email" name="email" type="email" placeholder="you@example.com" required>
+      </div>
+      <div class="actions">
+        <button type="submit">Create & Send</button>
+      </div>
+    </form>
+
+    <div class="meta">
+      The app downloads audio via YouTube, trims the first N seconds, merges them, zips the mp3, and emails it.
+    </div>
+  </div>
+</body>
+</html>
